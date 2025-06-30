@@ -47,6 +47,14 @@ if uploaded_file:
     df.columns = df.columns.str.strip()
     df = df.loc[:, ~df.columns.duplicated()]
 
+    # استبعاد الجهات التالية من التحليل
+    excluded_departments = [
+        'HC.نادي عجمان للفروسية',
+        'PD.الشرطة المحلية لإمارة عجمان',
+        'RC.الديوان الأميري'
+    ]
+
+
     tab1, tab2, tab3, tab4 = st.tabs([" نظرة عامة", " تحليلات بصرية", " البيانات المفقودة", " عرض البيانات"])
 
     with tab2:
