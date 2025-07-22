@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -83,7 +84,6 @@ if uploaded_file:
             st.markdown("#### جدول الجنسيات مع العدد والنسبة:")
             st.dataframe(nationality_counts)
 
-            # Pie Chart
             fig_pie = px.pie(
                 nationality_counts,
                 names='الجنسية',
@@ -95,7 +95,6 @@ if uploaded_file:
             fig_pie.update_traces(textinfo='percent+label')
             st.plotly_chart(fig_pie, use_container_width=True)
 
-            # Box per 5 rows
             st.markdown("### تفاصيل الجنسيات (كل 5 في صف):")
             colors = px.colors.sample_colorscale("Blues", [i/len(nationality_counts) for i in range(len(nationality_counts))])
 
@@ -131,7 +130,7 @@ if uploaded_file:
 
             excluded_cols = ['رقم الأقامة', 'الكفيل', 'تاريخ اصدار اللإقامة', 'تاريخ انتهاء اللإقامة']
             filtered_citizen_df = df_citizens.drop(columns=[col for col in excluded_cols if col in df_citizens.columns])
-            
+
             missing_percent_c = filtered_citizen_df.isnull().mean() * 100
             missing_count_c = filtered_citizen_df.isnull().sum()
             missing_df_c = pd.DataFrame({
@@ -171,6 +170,40 @@ if uploaded_file:
                 )
                 fig_n.update_layout(title="الوافدين - عدد القيم المفقودة ونسبتها", title_x=0.5, xaxis_tickangle=-45)
                 st.plotly_chart(fig_n, use_container_width=True)
+
+    with tab4: 
+        excluded_institutions = [
+            "جامعة الامارات", 
+            "كلية التقنية العيا -الشارقة", 
+            "كلية التقنية العليا", 
+            "كليات التقنية", 
+            "كليات التقنية العيا", 
+            "كليات التقنية العليا", 
+            "كليات التقنية العليا-الشارقة", 
+            "كليات التقية العليا", 
+            "كلية التقنيات العليا", 
+            "كليات التقنية العليا - الشارقة", 
+            "كلية تقنيات العليا دبي"
+        ]
+
+        df['المؤسسة التعليمية'] = df['المؤسسة التعليمية'].astype(str).str.strip()
+
+        to_check_df = df[~df['المؤسسة التعليمية'].isin(excluded_institutions)].copy()
+        fields_to_check = ['رقم المستند', 'رقم التحقق', 'رقم التصديق']
+        to_check_df['مكتمل؟'] = to_check_df[fields_to_check].notnull().all(axis=1)
+
+        completed = to_check_df[to_check_df['مكتمل؟'] == True]
+        missing = to_check_df[to_check_df['مكتمل؟'] == False]
+
+        st.subheader("تحليل اكتمال بيانات التوثيق للمؤسسات غير المستثناة")
+        st.success(f"✅ عدد الموظفين الذين لديهم بيانات مكتملة: {len(completed)} ({round(len(completed)/len(to_check_df)*100, 1)}%)")
+        st.warning(f"⚠️ عدد الموظفين الذين لديهم بيانات ناقصة: {len(missing)} ({round(len(missing)/len(to_check_df)*100, 1)}%)")
+
+        with st.expander("عرض الموظفين الذين بياناتهم مكتملة"):
+            st.dataframe(completed)
+
+        with st.expander("عرض الموظفين الذين لديهم نقص في الحقول"):
+            st.dataframe(missing)
+
 else:
     st.warning("يرجى رفع ملف بيانات الموظفين أولًا.")
-
