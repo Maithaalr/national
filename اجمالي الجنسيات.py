@@ -186,14 +186,25 @@ if uploaded_file:
             "كلية تقنيات العليا دبي"
         ]
 
-        df['المؤسسة التعليمية'] = df['المؤسسة التعليمية'].astype(str).str.strip()
+        # تأكدي من وجود المستوى التعليمي أولًا
+        accepted_levels = ["ماجستير", "دكتوراه", "بكالوريوس", "إنجاز", "دبلوم", "دبلوم عالي"]
 
-        to_check_df = df[~df['المؤسسة التعليمية'].isin(excluded_institutions)].copy()
+        # تصفية الموظفين الذين:
+        # 1) مستواهم ضمن القائمة
+        # 2) ومن مؤسسات غير مستثناة
+        eligible_df = df[
+            df['المستوى التعليمي'].isin(accepted_levels) &
+            ~df['المؤسسة التعليمية'].isin(excluded_institutions)
+        ].copy()
+
+        # فحص اكتمال الحقول
         fields_to_check = ['رقم المستند', 'رقم التحقق', 'رقم التصديق']
-        to_check_df['مكتمل؟'] = to_check_df[fields_to_check].notnull().all(axis=1)
+        eligible_df['مكتمل؟'] = eligible_df[fields_to_check].notnull().all(axis=1)
 
-        completed = to_check_df[to_check_df['مكتمل؟'] == True]
-        missing = to_check_df[to_check_df['مكتمل؟'] == False]
+        # تقسيم إلى مكتملة وناقصة
+        completed = eligible_df[eligible_df['مكتمل؟'] == True]
+        missing = eligible_df[eligible_df['مكتمل؟'] == False]
+
 
         st.subheader("تحليل اكتمال بيانات التوثيق للمؤسسات غير المستثناة")
         st.success(f"✅ عدد الموظفين الذين لديهم بيانات مكتملة: {len(completed)} ({round(len(completed)/len(to_check_df)*100, 1)}%)")
